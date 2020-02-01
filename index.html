@@ -1,0 +1,128 @@
+<html>
+    <head>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+        <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+        <script>
+
+            var globalData;
+            var transactionCurrency = "AUD";
+
+            async function getCurrencies() {
+                let data = await fetch('https://api.exchangeratesapi.io/latest?base=' + transactionCurrency)
+                .then((r) => {
+                    return r.json();
+                }).then((data) => {
+                    var d = new Date();
+                    globalData = data;
+                    document.getElementById('updated').innerText = d.toTimeString();
+                    updateData();
+                });
+                setTimeout(getCurrencies, 3000);
+            }
+
+            function updateData(){
+                let currencies = document.getElementsByClassName('currency');
+                if(globalData){
+                    var i;
+                    for(i = 0; i < currencies.length; i++){
+                        var element = currencies[i];
+                        var settlementCurrency = element.id;
+                        element.innerHTML = transactionCurrency + ":" + settlementCurrency + ": " + globalData.rates[settlementCurrency];
+                    }
+                }
+                inputChanged();
+            }
+
+            function pageSetup() {
+                let currencies = document.getElementsByClassName('currency');
+                let from = document.getElementById('from');
+                let to = document.getElementById('to');
+                var i;
+                for(i = 0; i < currencies.length; i++){
+                    var element = currencies[i];
+                    var li = document.createElement("LI");
+                    var item = document.createElement("A");
+                    item.classList.add('dropdown-item');
+                    item.href = "#";
+                    item.innerText = element.id;
+                    li.appendChild(item);
+                    from.append(li);
+                    to.append(li.cloneNode(true));
+                }
+                $("#from li a").click(function(){
+                    $("#from-dropdown").text($(this).text());
+                    $("#from-dropdown").val($(this).text());
+                    transactionCurrency = $(this).text();
+                    updateData();
+                });
+                $("#to li a").click(function(){
+                    $("#to-dropdown").text($(this).text());
+                    $("#to-dropdown").val($(this).text());
+                    updateData();
+                });
+                $("#to li a")[0].click();
+                $("#from li a")[1].click();
+                getCurrencies();
+            }
+
+            function inputChanged() {
+                if(globalData){
+                    let settlementCurrency = $("#to-dropdown").val();
+                    let rate = parseFloat(globalData.rates[settlementCurrency]);
+                    let inputValue = parseFloat($("#inputValue").val()) || 0;
+                    $('#outputValue').val(rate * inputValue);
+                }
+            }
+        </script>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+    </head>
+    <body onload="pageSetup()">
+        <div class="container-sm">
+            <div class="alert alert-primary">
+                <h1 id="AUD" class="currency"></h1>
+            </div>
+            <div class="alert alert-primary">
+                <h1 id="CNY" class="currency"></h1>
+            </div>
+            <div class="alert alert-primary">
+                <h1 id="USD" class="currency"></h1>
+            </div>
+            <div class="alert alert-primary">
+                <h1 id="INR" class="currency"></h1>
+            </div>
+            <div class="alert alert-primary">
+                <h1 id="HKD" class="currency"></h1>
+            </div>
+            <div class="alert alert-primary">
+                <h1 id="EUR" class="currency"></h1>
+            </div>
+            <div class="input-group alert alert-primary">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="basic-addon1">$</span>
+                </div>
+                <input type="number" class="form-control" onchange="inputChanged()" id="inputValue">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="from-dropdown"></button>
+                    <ul class="dropdown-menu" id="from">
+                    </ul>
+                </div>
+            </div>
+            <div class="input-group alert alert-primary">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="basic-addon1">$</span>
+                </div>
+                <input type="text" class="form-control" readonly id="outputValue">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="to-dropdown"></button>
+                    <ul class="dropdown-menu" id="to">
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </body>
+    <div class="card-footer text-muted fixed-bottom">
+        <p>Last Updated: <span id="updated"></span></p>
+    </div>
+
+</html>
